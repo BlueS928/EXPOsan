@@ -108,14 +108,14 @@ qs.StreamImpactItem(ID='NaOH_item',
                     GlobalWarming=1.2514)
     
 
-tea = _tea.create_tea(sys, IRR_value=0.03, income_tax_value=0.21, finance_interest_value=0.03, labor_cost_value = 29.32, duration = (2025, 2035))
+tea = _tea.create_tea(sys, IRR_value=0.03, income_tax_value=0.21, finance_interest_value=0.03, labor_cost_value = 29.32, duration = (2025, 2055))
 
 sys.simulate()
 
 Electricity = qs.ImpactItem('Electricity', 'kWh', GWP=1.1) #!!! include uncertainty range for electricity GWP in the technical assumption data sheet
-get_power = sum([u.power_utility.rate for u in sys.units]) * (24 * 365 * 10)
+get_power = sum([u.power_utility.rate for u in sys.units]) * (24 * 365 * 30)
 
-lca = qs.LCA(system=sys, lifetime=10, lifetime_unit='yr',
+lca = qs.LCA(system=sys, lifetime=30, lifetime_unit='yr',
        Electricity = get_power)
     
     # for income tax, 0.35 is the old federal income tax rate

@@ -215,7 +215,7 @@ class SolidsSeparation(SanUnit):
         # centrifuge bowl and hosuing stianless steel requirement
         
         
-        self.power_utility(self.F_vol_in * self.kW_per_m3_per_hr + self.conveyer_power * 0.7457 *
+        self.power_utility((self.F_vol_in / 24 * self.kW_per_m3_per_hr + self.conveyer_power * 0.7457) *
                            self.operating_hours)
         #!!! check calculation
         # this is electricity consumption not including pumping, 1 hp = 0.7457 kW
@@ -514,7 +514,7 @@ class RedoxED(SanUnit):
         # need to change ways to retrieve this data as well
         c3_flux = self.c3_slope*self.voltage + self.c3_const
         c4_flux = self.c4_slope*self.voltage + self.c4_const
-        c6_flux = self.c6_slope*self.voltage + self.c6_const
+        c6_flux = self.c6_slope*self.voltage + self.c6_const 
         
         # Calculate accumulating channel effluent concentration
         ac_out.imol['Propionate'] = ac_in.imol['Propionate'] + \
