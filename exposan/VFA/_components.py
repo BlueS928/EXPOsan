@@ -22,7 +22,7 @@ __all__ = ('create_components', )
 
 def create_components(set_thermo=True):
     
-    Na = Component('Na', search_ID = 'H2O', phase='l', particle_size='Soluble',
+    Na = Component('Na', phase='l', particle_size='Soluble',
                   degradability='Undegradable', organic=False)
     Cl = Component('Cl', phase='l', particle_size='Soluble',
                   degradability='Undegradable', organic=False)
@@ -32,7 +32,16 @@ def create_components(set_thermo=True):
                     degradability='Undegradable', organic=False)
     Polymer = Component('Polymer', search_ID = '79-06-1', phase = 's', particle_size='Soluble',
                         degradability='Undegradable', organic=True) # inert polymer as coagulant
+    NaOCl = Component('NaOCl', formula='NaOCl', phase='l', particle_size='Soluble',
+                  degradability='Undegradable', organic=False)
+    add_V_from_rho(NaOCl, 1100) #!!! add rho source
+    # NaOCl.mu.add_model(0.0032)
+    CitricAcid = Component('CitricAcid', search_ID = '77-92-9', phase='l', particle_size='Soluble',
+                  degradability='Undegradable', organic=False)
     
+    Bisulfite = Component('Bisulfite', search_ID = '7631-90-5', phase='l', particle_size='Soluble',
+                  degradability='Undegradable', organic=False) # assume sodium bisulfite
+    add_V_from_rho(Bisulfite, 1100) #!!! replace place holder rho, add citation
     # OH = Component('OH', phase='l', particle_size='Soluble',
     #               degradability='Undegradable', organic=False)
     
@@ -58,7 +67,7 @@ def create_components(set_thermo=True):
     Digestate_solids.Cn.add_model(1.25*10**3*Digestate_solids.MW/1000)
     # adding heat capacity of digestate_solids, reference: shijie leow et al. 2015 Green Chemistry
     Digestate_solids.mu.add_model(0.5)
-    cmps = Components((Na, Cl, K, H2O, Polymer, Propionate, Butyrate, Hexanoate, Digestate_solids))
+    cmps = Components((Na, Cl, K, H2O, NaOCl, Polymer, CitricAcid, Bisulfite, Propionate, Butyrate, Hexanoate, Digestate_solids))
     
     cmps.compile()
     cmps.set_alias('H2O', 'Water')
