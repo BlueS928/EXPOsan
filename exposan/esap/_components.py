@@ -23,8 +23,9 @@ __all__ = (
     )
 
 ammonium_sulfate_solution_molarity = 0.835 # mol/L
+# this is the average of the 0.4 M to 1.3 M TAN in ammonium salt concetration from Kogler et al.
 NH3_solution_molarity = 1.76 # mol/L
-
+# NH3 product solution concentration from Kogler et al.
 
 def create_components(set_thermo=True):
     H2O = Component('H2O', particle_size='Soluble',

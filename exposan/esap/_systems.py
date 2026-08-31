@@ -87,8 +87,9 @@ _default_feed_molarities = {
 
 _acid_replacement_interval_hr = 16 * 24
 _acid_solution_volume_L = 0.4
-_acid_solution_molarity = 0.2
-# acid dose from Kogler et al. 
+_acid_solution_molarity = 1
+_acid_solution_density_kg_per_L = 1
+# acid dose from Kogler et al. was 0.2 M, here we referred to data from RP: 1 M
 # Environ. Sci. Technol. Lett. (2024) 11 (8): 886–894.
 # https://doi.org/10.1021/acs.estlett.4c00366
 
@@ -167,15 +168,23 @@ def _create_influent_streams(components, flow_L_hr, feed_molarities,
     return influents
 
 
-def _create_acid_stream(product, acid_molarities=None,
+def _create_acid_stream(product, components, acid_molarities=None,
                         acid_solution_volume_L=_acid_solution_volume_L,
-                        acid_replacement_interval_hr=_acid_replacement_interval_hr):
+                        acid_replacement_interval_hr=_acid_replacement_interval_hr,
+                        acid_solution_density_kg_per_L=(
+                            _acid_solution_density_kg_per_L)):
     acid_molarities = dict(_default_acid_molarities, **(acid_molarities or {}))
     acid_ID = _acid_components[product]
     acid = qs.WasteStream(f'{acid_ID}_solution', phase='l')
     flow_L_hr = acid_solution_volume_L / acid_replacement_interval_hr
-    acid.imol[acid_ID] = acid_molarities[product] * flow_L_hr / 1000
-    acid.imass['H2O'] = flow_L_hr
+    _set_solution_flow(
+        acid,
+        acid_ID,
+        acid_molarities[product],
+        flow_L_hr,
+        acid_solution_density_kg_per_L,
+        components,
+        )
     return acid
 
 
@@ -282,14 +291,10 @@ def _create_anhydrous_ammonia_system(feed, steam_kg_per_hr,
     @PreStripper.add_specification(run=True)
     def adjust_NaOH():
         influent, base = PreStripper.ins
-        target_free_NH3_fraction = 1 / (1 + 10**(ammonia_pKa - target_pH))
         OH_excess_kmol_per_m3 = 10**(target_pH - 14)
         base.empty()
         base.phase = 's'
-        base.imol['NaOH'] = (
-            influent.imol['NH3'] * target_free_NH3_fraction
-            + OH_excess_kmol_per_m3 * influent.F_vol
-            )
+        base.imol['NaOH'] = OH_excess_kmol_per_m3 * influent.F_vol
 
     water_steam = qs.Stream('water_steam', H2O=steam_kg_per_hr, units='kg/hr',
                             phase='l', T=298.15)
@@ -376,7 +381,9 @@ def create_system(product='ammonium_sulfate', flowsheet=None,
                   target_pH=11.25,
                   ammonia_pKa=9.25,
                   steam_kg_per_hr=None,
-                  simulate=True):
+                  simulate=True,
+                  acid_solution_density_kg_per_L=(
+                      _acid_solution_density_kg_per_L)):
     '''
     Create a downstream ESAP fertilizer production system.
 
@@ -416,6 +423,9 @@ def create_system(product='ammonium_sulfate', flowsheet=None,
     acid_replacement_interval_hr : float, optional
         Acid replacement interval, [hr]. Used only for ammonium salt systems.
         The default is 16 days, converted to 384 hr.
+    acid_solution_density_kg_per_L : float, optional
+        Assumed density of the acid makeup solution, [kg/L]. This is used to
+        convert its volumetric flow into acid and water mass flows.
     solid_evaporator_solute_wt_frac : float, optional
         Target solute mass fraction after multi-effect evaporation, [kg solute
         / kg solution]. Used only for solid-product systems:
@@ -475,9 +485,11 @@ def create_system(product='ammonium_sulfate', flowsheet=None,
     if product in _acid_components:
         acid = _create_acid_stream(
             product,
+            components,
             acid_molarities,
             acid_solution_volume_L,
             acid_replacement_interval_hr,
+            acid_solution_density_kg_per_L,
             )
 
     if product == 'anhydrous_ammonia':
